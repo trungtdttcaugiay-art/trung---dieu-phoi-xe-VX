@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Điều phối xe · Việt Xô</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Noto+Sans:wght@400;500;700&display=swap&subset=vietnamese" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  body { background: var(--bg); }
+  .top2 { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 18px 0; }
+  .login { max-width: 380px; margin: 12vh auto; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+  .tabs button, .chip { border: 1px solid var(--border); background: var(--card); border-radius: 12px; padding: 10px 16px; font: 600 .92rem var(--font); cursor: pointer; min-height: 44px; color: var(--fg); }
+  .tabs button[aria-pressed="true"] { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .tbl { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); font-size: .92rem; }
+  .tbl th { background: var(--muted); text-align: left; padding: 12px; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; }
+  .tbl td { padding: 12px; border-top: 1px solid var(--border); vertical-align: top; }
+  .tbl select, .tbl input { font: inherit; border: 1.5px solid var(--border); border-radius: 10px; padding: 8px; min-height: 40px; max-width: 100%; background: #fff; color: var(--fg); }
+  .scroll { overflow-x: auto; }
+  .badge { display: inline-block; border-radius: 999px; padding: 2px 10px; font-weight: 600; font-size: .78rem; }
+  .s-new { background: #fef3c7; color: #92400e; } .s-confirmed { background: #dbeafe; color: #1e40af; }
+  .s-assigned { background: #e0e7ff; color: #3730a3; } .s-done { background: #d1fae5; color: #065f46; } .s-cancelled { background: #fee2e2; color: #991b1b; }
+  .k-outside, .k-walkin { color: var(--accent-dark); font-weight: 600; }
+  .vgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .vcard { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); display: grid; gap: 10px; }
+  .vcard input { font: inherit; border: 1.5px solid var(--border); border-radius: 10px; padding: 10px; min-height: 44px; width: 100%; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--fg); color: #fff; padding: 12px 20px; border-radius: 12px; display: none; z-index: 99; }
+  .hide { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <form class="panel login" id="loginForm">
+    <h2>Đăng nhập điều phối</h2>
+    <div class="field"><label for="u">Tài khoản</label><input id="u" autocomplete="username" required></div>
+    <div class="field" style="margin-top:12px"><label for="p">Mật khẩu</label><input id="p" type="password" autocomplete="current-password" required></div>
+    <p class="msg" id="loginErr" style="color:var(--danger)"></p>
+    <button class="btn btn-primary" style="width:100%" type="submit">Đăng nhập</button>
+  </form>
+
+  <div id="app" class="hide">
+    <div class="top2">
+      <h1 style="font-size:1.6rem;margin:0">Điều phối xe · Việt Xô</h1>
+      <div style="display:flex;gap:8px"><button class="chip" id="refresh" type="button">Làm mới</button><button class="chip" id="logout" type="button">Đăng xuất</button></div>
+    </div>
+    <div class="tabs" role="group" aria-label="Bộ lọc">
+      <button type="button" data-f="open" aria-pressed="true">Cần xử lý</button>
+      <button type="button" data-f="today" aria-pressed="false">Hôm nay</button>
+      <button type="button" data-f="all" aria-pressed="false">Tất cả</button>
+      <button type="button" data-f="vehicles" aria-pressed="false">Xe &amp; tài xế</button>
+    </div>
+    <div id="bookingsView" class="scroll"></div>
+    <div id="vehiclesView" class="vgrid hide"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script src="/admin/admin.js"></script>
+</body>
+</html>
