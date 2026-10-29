@@ -56,7 +56,7 @@
     return el('tr', {},
       el('td', {}, el('b', {}, b.ref), el('br'), el('span', { class: 'badge s-' + b.status }, STATUS[b.status] || b.status)),
       el('td', {}, fmtTime(b.pickup_at)),
-      el('td', {}, el('b', {}, b.name), el('br'), el('a', { href: 'tel:' + b.phone.replace(/[^\d+]/g, '') }, contact)),
+      el('td', {}, el('b', {}, b.name), el('br'), el('span', { class: 'badge s-confirmed' }, 'ID ' + (b.guest_id || '—')), el('br'), el('a', { href: 'tel:' + b.phone.replace(/[^\d+]/g, '') }, contact)),
       el('td', {}, b.pickup + (b.hotel ? ` (${b.hotel})` : ''), el('br'), '→ ' + (b.dropoff || 'Phòng khám Việt Xô'), b.note ? el('div', { style: 'color:var(--muted-fg)' }, 'Ghi chú: ' + b.note) : ''),
       el('td', {}, el('span', { class: 'k-' + b.kind }, KIND[b.kind] || b.kind), el('br'), `${b.pax} khách · ${b.luggage} kiện`),
       el('td', {}, vsel), el('td', {}, ssel), el('td', {}, sur));

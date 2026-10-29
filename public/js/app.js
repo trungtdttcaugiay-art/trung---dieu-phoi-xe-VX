@@ -5,7 +5,6 @@
   try { lang = localStorage.getItem('vx_lang') || ((navigator.language || '').startsWith('vi') ? 'vi' : 'ru'); } catch {}
   if (!I18N[lang]) lang = 'ru';
   const t = (k) => I18N[lang][k] ?? I18N.ru[k] ?? k;
-  let pricing = null;
 
   function applyLang() {
     document.documentElement.lang = lang;
@@ -14,7 +13,8 @@
     $$('[data-i18n]').forEach((el) => (el.textContent = t(el.dataset.i18n)));
     $$('[data-i18n-html]').forEach((el) => (el.innerHTML = t(el.dataset.i18nHtml)));
     $$('.lang button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
-    renderPrice();
+    $$('[data-i18n-ph]').forEach((el) => (el.placeholder = t(el.dataset.i18nPh)));
+    renderHotels();
     updateSurcharge();
     try { localStorage.setItem('vx_lang', lang); } catch {}
   }
@@ -29,27 +29,19 @@
   });
   $$('#nav a').forEach((a) => a.addEventListener('click', () => { nav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); }));
 
-  // Bảng giá (đọc từ /api/pricing, giá null = theo yêu cầu)
-  function renderPrice() {
-    const body = $('#priceBody');
-    if (!pricing || !body) return;
-    const fmt = new Intl.NumberFormat(lang === 'vi' ? 'vi-VN' : lang === 'ru' ? 'ru-RU' : 'en-US');
-    body.innerHTML = '';
-    pricing.zones.forEach((z) => {
-      const tr = document.createElement('tr');
-      const a = document.createElement('td'), b = document.createElement('td');
-      a.textContent = t('zone.' + z.id);
-      if (z.free_for_patients) {
-        const f = document.createElement('span');
-        f.className = 'free'; f.textContent = t('price.free');
-        a.append(f);
-      }
-      b.className = 'p';
-      b.textContent = z.price == null ? t('price.ask') : fmt.format(z.price) + ' ₫';
-      tr.append(a, b); body.append(tr);
+  // Gợi ý khách sạn (trung tâm Nha Trang + Cam Ranh), nhãn theo ngôn ngữ đang chọn
+  function renderHotels() {
+    const dl = $('#hotelList');
+    if (!dl || !window.HOTELS) return;
+    dl.replaceChildren();
+    [['center', 'hotel.center'], ['camranh', 'hotel.camranh']].forEach(([zone, key]) => {
+      (HOTELS[zone] || []).forEach((name) => {
+        const o = document.createElement('option');
+        o.value = name; o.label = t(key);
+        dl.append(o);
+      });
     });
   }
-  fetch('/api/pricing').then((r) => r.json()).then((p) => { pricing = p; renderPrice(); }).catch(() => {});
 
   // Form
   const form = $('#bookForm'), result = $('#result'), sur = $('#surcharge'), btn = $('#submitBtn');
@@ -96,7 +88,7 @@
       const j = await r.json().catch(() => ({}));
       if (r.ok && j.ok) {
         result.className = 'result ok';
-        result.textContent = t('ok').replace('{ref}', j.ref || '');
+        result.textContent = t('ok').replace('{ref}', j.ref || '').replace('{gid}', j.guest_id || '');
         form.reset(); updateSurcharge();
       } else {
         result.className = 'result bad';

@@ -5,7 +5,7 @@ function text(b) {
   return [
     `ĐƠN XE MỚI #${b.ref}`,
     `Loại: ${KIND[b.kind] || b.kind}`,
-    `Khách: ${b.name} · ${b.phone}${b.messenger ? ' · ' + b.messenger : ''}`,
+    `Khách: ${b.name} [ID ${b.guest_id}] · ${b.phone}${b.messenger ? ' · ' + b.messenger : ''}`,
     `Giờ đón: ${String(b.pickup_at).replace('T', ' ')}`,
     `Đón: ${b.pickup}${b.hotel ? ' (' + b.hotel + ')' : ''}`,
     `Đến: ${b.dropoff || 'Phòng khám Việt Xô'}`,

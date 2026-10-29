@@ -40,6 +40,9 @@ async function init() {
     vehicle_id INT NULL, surcharge VARCHAR(120) DEFAULT '', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX (pickup_at), INDEX (status)
   ) CHARACTER SET utf8mb4`);
+  // Thêm cột guest_id cho bảng cũ (bỏ qua nếu đã có)
+  await pool.query("ALTER TABLE bookings ADD COLUMN guest_id VARCHAR(12) DEFAULT '', ADD INDEX (guest_id)")
+    .catch((e) => { if (e.code !== 'ER_DUP_FIELDNAME') throw e; });
   const [[{ c }]] = await pool.query('SELECT COUNT(*) c FROM vehicles');
   if (!c) for (const v of DEFAULT_VEHICLES)
     await pool.query('INSERT INTO vehicles (id,name) VALUES (?,?)', [v.id, v.name]);
@@ -50,9 +53,9 @@ const toDate = (s) => String(s).replace('T', ' ').slice(0, 19);
 async function createBooking(b) {
   if (useMysql) {
     const [r] = await pool.query(
-      `INSERT INTO bookings (ref,name,phone,messenger,kind,hotel,pickup,dropoff,pickup_at,pax,luggage,note,lang)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [b.ref, b.name, b.phone, b.messenger, b.kind, b.hotel, b.pickup, b.dropoff, toDate(b.pickup_at), b.pax, b.luggage, b.note, b.lang]);
+      `INSERT INTO bookings (ref,guest_id,name,phone,messenger,kind,hotel,pickup,dropoff,pickup_at,pax,luggage,note,lang)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [b.ref, b.guest_id, b.name, b.phone, b.messenger, b.kind, b.hotel, b.pickup, b.dropoff, toDate(b.pickup_at), b.pax, b.luggage, b.note, b.lang]);
     return { ...b, id: r.insertId, status: 'new', vehicle_id: null, surcharge: '' };
   }
   const d = readFile();

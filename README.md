@@ -1,8 +1,8 @@
-# Việt Xô Transfer
+﻿# Việt Xô Transfer
 
 Website điều phối xe đưa đón (4 xe 16 chỗ) của Phòng khám nha khoa quốc tế Việt Xô, Nha Trang. Node.js + Express + MySQL. Giao diện RU / VI / EN.
 
-- Trang khách: `/` — giới thiệu, bảng giá, form đặt xe (bệnh nhân / ngoài trung tâm / vãng lai)
+- Trang khách: `/` — giới thiệu, form đặt xe có gợi ý khách sạn (bệnh nhân / ngoài trung tâm / vãng lai)
 - Trang điều phối: `/admin/` — xem đơn, gán xe (chặn trùng lịch 2 giờ), đổi trạng thái, ghi phụ phí, quản lý xe & tài xế
 - Thông báo đơn mới: Telegram, Zalo OA, Email (kênh nào có biến môi trường thì chạy)
 
@@ -16,9 +16,13 @@ npm start              # http://localhost:3000
 
 Nếu `DB_HOST` để trống, dữ liệu lưu tạm trong `data/store.json` (chỉ để thử). Production dùng MySQL.
 
-## Cập nhật bảng giá phụ phí
+## Danh sách khách sạn gợi ý
 
-Sửa `src/pricing.json`: đặt `price` (số VND) cho từng tuyến, `null` = "báo giá theo yêu cầu".
+Sửa `public/js/hotels.js` (hai nhóm: trung tâm Nha Trang và Cam Ranh). Khách vẫn gõ tự do nếu khách sạn không có trong danh sách.
+
+## Mã ID khách
+
+Mỗi đơn có mã ID khách dạng `KHxxxxxx`, tạo từ số điện thoại nên khách quay lại giữ nguyên ID. Mã hiện ở thông báo, trang admin và màn hình xác nhận.
 
 ## Push lên GitHub
 
@@ -41,3 +45,4 @@ git push -u origin main
 ## Telegram
 
 Tạo bot với @BotFather → lấy token → thêm bot vào nhóm điều phối → lấy `chat_id` (gửi tin vào nhóm rồi mở `https://api.telegram.org/bot<TOKEN>/getUpdates`).
+

@@ -6,7 +6,7 @@ const path = require('path');
 const db = require('./src/db');
 const auth = require('./src/auth');
 const { notifyNewBooking } = require('./src/notify');
-const pricing = require('./src/pricing.json');
+const crypto = require('crypto');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -31,7 +31,12 @@ const clean = (v, n = 200) => String(v ?? '').replace(/[\u0000-\u001f]/g, ' ').t
 const KINDS = ['clinic', 'outside', 'walkin'];
 const STATUSES = ['new', 'confirmed', 'assigned', 'done', 'cancelled'];
 
-app.get('/api/pricing', (req, res) => res.json(pricing));
+// Mã ID khách: cùng số điện thoại luôn ra cùng một mã, khách quay lại giữ nguyên ID.
+const guestId = (phone) => {
+  const digits = phone.replace(/\D/g, '');
+  const n = BigInt('0x' + crypto.createHash('sha256').update(digits).digest('hex').slice(0, 12));
+  return 'KH' + n.toString(36).toUpperCase().padStart(6, '0').slice(0, 6);
+};
 
 const bookLimit = rateLimit({ windowMs: 15 * 60e3, max: 10, standardHeaders: true, legacyHeaders: false });
 app.post('/api/bookings', bookLimit, async (req, res) => {
@@ -51,9 +56,10 @@ app.post('/api/bookings', bookLimit, async (req, res) => {
     if (!row.name || row.phone.replace(/\D/g, '').length < 7 || !row.pickup || isNaN(when))
       return res.status(400).json({ error: 'invalid' });
     if (when.getTime() < Date.now() - 3600e3) return res.status(400).json({ error: 'past' });
+    row.guest_id = guestId(row.phone);
     const saved = await db.createBooking(row);
     notifyNewBooking(saved).catch((e) => console.error('notify', e.message));
-    res.json({ ok: true, ref: saved.ref });
+    res.json({ ok: true, ref: saved.ref, guest_id: saved.guest_id });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'server' });
