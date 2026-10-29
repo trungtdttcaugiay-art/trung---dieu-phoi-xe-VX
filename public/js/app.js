@@ -17,6 +17,7 @@
     renderHotels();
     if (typeof renderChips === 'function') { renderChips(); renderFleet(); }
     updateSurcharge();
+    if (typeof updateRoute === 'function') updateRoute();
     try { localStorage.setItem('vx_lang', lang); } catch {}
   }
 
@@ -94,12 +95,23 @@
 
   // Form
   const form = $('#bookForm'), result = $('#result'), sur = $('#surcharge'), btn = $('#submitBtn');
+  // Phụ phí chỉ nhắc khi nguồn khách là vãng lai
   function updateSurcharge() {
-    const k = form.kind.value;
-    sur.classList.toggle('show', k !== 'clinic');
-    sur.textContent = k === 'clinic' ? '' : t('sur.' + k);
+    const walkin = form.source.value === 'WALKIN';
+    sur.classList.toggle('show', walkin);
+    sur.textContent = walkin ? t('sur.walkin') : '';
   }
-  $$('input[name=kind]').forEach((r) => r.addEventListener('change', updateSurcharge));
+  // Hiện điểm đi → điểm đến theo loại lịch: đón (khách sạn → phòng khám) hoặc đưa về (phòng khám → khách sạn)
+  function updateRoute() {
+    const place = form.hotel.value.trim() || form.address.value.trim() || t('route.hotel');
+    const clinic = t('route.clinic');
+    const pickup = form.kind.value === 'pickup';
+    $('#routeFrom').textContent = pickup ? place : clinic;
+    $('#routeTo').textContent = pickup ? clinic : place;
+  }
+  $$('input[name=kind]').forEach((r) => r.addEventListener('change', updateRoute));
+  ['hotel', 'address'].forEach((n) => form[n].addEventListener('input', updateRoute));
+  form.source.addEventListener('change', updateSurcharge);
 
   const hotelMap = $('#hotelMap');
   form.hotel.addEventListener('input', () => {
@@ -123,12 +135,11 @@
 
   function validate() {
     let bad = null;
-    [['name', 'v.required'], ['pickup', 'v.required'], ['pickup_at', 'v.required']].forEach(([n, m]) => {
-      const bl = !form[n].value.trim(); setErr(form[n], bl ? t(m) : ''); if (bl && !bad) bad = form[n];
-    });
+    // Họ tên và số điện thoại không bắt buộc; cần có khách sạn hoặc địa chỉ để biết điểm đi/đến.
+    const placeBad = !form.hotel.value.trim() && !form.address.value.trim();
+    setErr(form.address, placeBad ? t('v.required') : ''); if (placeBad && !bad) bad = form.address;
+    const whenBad = !form.pickup_at.value; setErr(form.pickup_at, whenBad ? t('v.required') : ''); if (whenBad && !bad) bad = form.pickup_at;
     const srcBad = !form.source.value; setErr(form.source, srcBad ? t('v.required') : ''); if (srcBad && !bad) bad = form.source;
-    const phoneBad =form.phone.value.replace(/\D/g, '').length < 7;
-    setErr(form.phone, phoneBad ? t('v.phone') : ''); if (phoneBad && !bad) bad = form.phone;
     if (bad) bad.focus();
     return !bad;
   }
@@ -146,7 +157,7 @@
       if (r.ok && j.ok) {
         result.className = 'result ok';
         result.textContent = t('ok').replace('{ref}', j.ref || '').replace('{gid}', j.guest_id || '');
-        form.reset(); updateSurcharge();
+        form.reset(); updateSurcharge(); updateRoute();
       } else {
         result.className = 'result bad';
         result.textContent = j.error === 'past' ? t('err.past') : t('err');

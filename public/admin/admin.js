@@ -1,7 +1,7 @@
 (() => {
   const $ = (s) => document.querySelector(s);
   const STATUS = { new: 'Mới', confirmed: 'Đã xác nhận', assigned: 'Đã gán xe', done: 'Hoàn thành', cancelled: 'Huỷ' };
-  const KIND = { clinic: 'Bệnh nhân', outside: 'Ngoài TT', walkin: 'Vãng lai' };
+  const KIND = { pickup: 'Đón khách', dropoff: 'Đưa về', clinic: 'Bệnh nhân', outside: 'Ngoài TT', walkin: 'Vãng lai' };
   const SOURCE = { ANEX: 'ANEX', AB: 'AB', AMEGA: 'AMEGA', WALKIN: 'Vãng lai' };
   let state = { bookings: [], vehicles: [] }, filter = 'open';
   let cfg = { clinicQuery: 'Phòng khám nha khoa quốc tế Việt Xô Nha Trang', optimize: false };
@@ -68,13 +68,12 @@
     const sur = el('input', { value: b.surcharge || '', placeholder: 'VD: 300.000đ', 'aria-label': 'Phụ phí', onchange: (e) => patch(b.id, { surcharge: e.target.value }) });
     const veh = state.vehicles.find((v) => v.id === b.vehicle_id);
     const vinfo = veh ? el('div', { style: 'margin-top:6px;font-size:.85rem;color:var(--muted-fg)' }, [veh.plate, veh.driver].filter(Boolean).join(' · '), veh.phone ? el('br') : '', veh.phone ? el('a', { href: tel(veh.phone) }, veh.phone) : '') : '';
-    const from = [b.pickup, b.hotel].filter(Boolean).join(', ');
     return el('tr', {},
       el('td', {}, el('b', {}, b.ref), el('br'), el('span', { class: 'badge s-' + b.status }, STATUS[b.status] || b.status), el('div', { style: 'font-size:.8rem;color:var(--muted-fg);margin-top:4px' }, 'Đặt ' + fmtCreated(b.created_at))),
       el('td', {}, fmtTime(b.pickup_at)),
-      el('td', {}, el('b', {}, b.name), el('br'), el('span', { class: 'badge s-confirmed' }, 'ID ' + (b.guest_id || '—')), el('br'), el('a', { href: tel(b.phone) }, [b.phone, b.messenger].filter(Boolean).join(' · '))),
-      el('td', {}, b.pickup + (b.hotel ? ` (${b.hotel})` : ''), el('br'), '→ ' + (b.dropoff || 'Phòng khám Việt Xô'), el('br'),
-        el('a', { href: 'https://www.google.com/maps/dir/?api=1&travelmode=driving&origin=' + encodeURIComponent(from) + '&destination=' + encodeURIComponent(b.dropoff || cfg.clinicQuery), target: '_blank', rel: 'noopener' }, 'Chỉ đường Google Maps'),
+      el('td', {}, el('b', {}, b.name || '(chưa ghi tên)'), el('br'), el('span', { class: 'badge s-confirmed' }, 'ID ' + (b.guest_id || '—')), el('br'), b.phone ? el('a', { href: tel(b.phone) }, [b.phone, b.messenger].filter(Boolean).join(' · ')) : (b.messenger || '')),
+      el('td', {}, el('small', {}, 'Đi: '), b.pickup, el('br'), el('small', {}, 'Đến: '), b.dropoff, el('br'),
+        el('a', { href: 'https://www.google.com/maps/dir/?api=1&travelmode=driving&origin=' + encodeURIComponent(b.pickup) + '&destination=' + encodeURIComponent(b.dropoff), target: '_blank', rel: 'noopener' }, 'Chỉ đường Google Maps'),
         b.note ? el('div', { style: 'color:var(--muted-fg)' }, 'Ghi chú: ' + b.note) : ''),
       el('td', {}, el('span', { class: 'badge s-assigned' }, SOURCE[b.source] || '—'), el('br'), el('span', { class: 'k-' + b.kind }, KIND[b.kind] || b.kind), el('br'), `${b.pax} khách`),
       el('td', {}, vsel, vinfo), el('td', {}, ssel), el('td', {}, sur));
@@ -91,14 +90,15 @@
   /* ---------- Lịch trình đưa đón ---------- */
   // Khu vực: Cam Ranh (xa, ~45-60 phút) hay trung tâm Nha Trang.
   const zoneOf = (b) => {
-    const txt = (b.hotel + ' ' + b.pickup).toLowerCase();
+    const txt = (b.hotel + ' ' + b.pickup + ' ' + b.dropoff).toLowerCase();
     const known = (window.HOTELS?.camranh || []).some((n) => txt.includes(n.toLowerCase()));
     return known || /cam ranh|камран|camranh/.test(txt) ? 'camranh' : 'center';
   };
   const RUN_MIN = { center: 120, camranh: 180 }; // thời gian một chuyến (phút) trước khi xe rảnh lại
   const MERGE_MIN = 30; // đón ghép: các đơn cùng khu vực, lệch nhau tối đa 30 phút
   const minOf = (s) => { const [h, m] = String(s).slice(11, 16).split(':').map(Number); return h * 60 + m; };
-  const stopOf = (b) => [b.hotel || b.pickup, zoneOf(b) === 'camranh' ? 'Cam Ranh' : 'Nha Trang'].join(', ');
+  // Điểm dừng của khách = khách sạn (điểm đi của lịch đón, điểm đến của lịch đưa về)
+  const stopOf = (b) => [b.hotel || (b.kind === 'dropoff' ? b.dropoff : b.pickup),zoneOf(b) === 'camranh' ? 'Cam Ranh' : 'Nha Trang'].join(', ');
 
   function buildPlan(date) {
     const day = state.bookings.filter((b) => String(b.pickup_at).startsWith(date) && !['cancelled', 'done'].includes(b.status))

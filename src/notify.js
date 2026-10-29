@@ -1,14 +1,14 @@
 // Gửi thông báo đơn mới qua Telegram, Zalo OA, Email. Kênh nào chưa cấu hình sẽ bỏ qua.
-const KIND = { clinic: 'Bệnh nhân phòng khám', outside: 'Ngoài trung tâm (phụ phí)', walkin: 'Khách vãng lai (phụ phí)' };
+const KIND = { pickup: 'Đón khách (khách sạn → phòng khám)', dropoff: 'Đưa khách về (phòng khám → khách sạn)' };
 
 function text(b) {
   return [
     `ĐƠN XE MỚI #${b.ref}`,
     `Loại: ${KIND[b.kind] || b.kind}`,
-    `Khách: ${b.name} [ID ${b.guest_id}] · ${b.phone}${b.messenger ? ' · ' + b.messenger : ''}`,
+    `Khách: ${b.name || '(chưa ghi tên)'} [ID ${b.guest_id}]${b.phone ? ' · ' + b.phone : ''}${b.messenger ? ' · ' + b.messenger : ''}`,
     `Giờ đón: ${String(b.pickup_at).replace('T', ' ')}`,
-    `Đón: ${b.pickup}${b.hotel ? ' (' + b.hotel + ')' : ''}`,
-    `Đến: ${b.dropoff || 'Phòng khám Việt Xô'}`,
+    `Điểm đi: ${b.pickup}`,
+    `Điểm đến: ${b.dropoff}`,
     `Số khách: ${b.pax} · Nguồn: ${b.source === 'WALKIN' ? 'Vãng lai' : b.source}`,
     `Giờ đặt: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`,
     b.note ? `Ghi chú: ${b.note}` : '',

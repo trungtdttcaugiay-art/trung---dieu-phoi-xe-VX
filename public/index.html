@@ -151,19 +151,22 @@
       <fieldset style="border:0;padding:0;margin:0">
         <legend class="sr" data-i18n="book.k"></legend>
         <div class="seg">
-          <label><input type="radio" name="kind" value="clinic" checked><span data-i18n="book.k1"></span></label>
-          <label><input type="radio" name="kind" value="outside"><span data-i18n="book.k2"></span></label>
-          <label><input type="radio" name="kind" value="walkin"><span data-i18n="book.k3"></span></label>
+          <label><input type="radio" name="kind" value="pickup" checked><span data-i18n="book.k1"></span></label>
+          <label><input type="radio" name="kind" value="dropoff"><span data-i18n="book.k2"></span></label>
         </div>
       </fieldset>
+      <div class="route" id="routeBox" aria-live="polite">
+        <div><small data-i18n="route.from"></small><b id="routeFrom"></b></div>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <div><small data-i18n="route.to"></small><b id="routeTo"></b></div>
+      </div>
       <div class="surcharge" id="surcharge" role="status"></div>
       <div class="fields">
-        <div class="field"><label for="name" data-i18n="f.name"></label><input id="name" name="name" autocomplete="name" required><span class="msg"></span></div>
-        <div class="field"><label for="phone" data-i18n="f.phone"></label><input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required><span class="msg"></span></div>
+        <div class="field"><label for="name" data-i18n="f.name"></label><input id="name" name="name" autocomplete="name"></div>
+        <div class="field"><label for="phone" data-i18n="f.phone"></label><input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel"></div>
         <div class="field"><label for="messenger" data-i18n="f.messenger"></label><input id="messenger" name="messenger"></div>
         <div class="field"><label for="hotel" data-i18n="f.hotel"></label><input id="hotel" name="hotel" list="hotelList" autocomplete="off" data-i18n-ph="f.hotel.ph"><datalist id="hotelList"></datalist><a class="maplink" id="hotelMap" target="_blank" rel="noopener" hidden data-i18n="map.view"></a></div>
-        <div class="field full"><label for="pickup" data-i18n="f.pickup"></label><input id="pickup" name="pickup" autocomplete="street-address" required><span class="msg"></span></div>
-        <div class="field full"><label for="dropoff" data-i18n="f.dropoff"></label><input id="dropoff" name="dropoff"></div>
+        <div class="field full"><label for="address" data-i18n="f.address"></label><input id="address" name="address" autocomplete="street-address"><span class="msg"></span></div>
         <div class="field"><label for="pickup_at" data-i18n="f.when"></label><input id="pickup_at" name="pickup_at" type="datetime-local" required><span class="msg"></span></div>
         <div class="field"><label for="pax" data-i18n="f.pax"></label><input id="pax" name="pax" type="number" min="1" max="16" value="2" inputmode="numeric"></div>
         <div class="field"><label for="guest_id" data-i18n="f.gid"></label><input id="guest_id" name="guest_id" maxlength="24" autocomplete="off" data-i18n-ph="f.gid.ph"></div>

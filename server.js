@@ -29,7 +29,7 @@ app.use(express.json({ limit: '20kb' }));
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'], maxAge: '1h' }));
 
 const clean = (v, n = 200) => String(v ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n);
-const KINDS = ['clinic', 'outside', 'walkin'];
+const KINDS = ['pickup', 'dropoff']; // đón (khách sạn → phòng khám) / đưa về (phòng khám → khách sạn)
 const SOURCES = ['ANEX', 'AB', 'AMEGA', 'WALKIN'];
 const STATUSES = ['new', 'confirmed', 'assigned', 'done', 'cancelled'];
 
@@ -45,7 +45,8 @@ app.get('/api/fleet', async (req, res) => {
 
 // Mã ID khách: cùng số điện thoại luôn ra cùng một mã, khách quay lại giữ nguyên ID.
 const guestId = (phone) => {
-  const digits = phone.replace(/\D/g, '');
+  const d = phone.replace(/\D/g, '');
+  const digits = d.length >= 7 ? d : phone;
   const n = BigInt('0x' + crypto.createHash('sha256').update(digits).digest('hex').slice(0, 12));
   return 'KH' + n.toString(36).toUpperCase().padStart(6, '0').slice(0, 6);
 };
@@ -58,18 +59,21 @@ app.post('/api/bookings', bookLimit, async (req, res) => {
     const row = {
       ref: 'VX' + Date.now().toString(36).toUpperCase().slice(-6),
       name: clean(b.name, 120), phone: clean(b.phone, 40), messenger: clean(b.messenger, 80),
-      kind: KINDS.includes(b.kind) ? b.kind : 'clinic',
-      hotel: clean(b.hotel, 160), pickup: clean(b.pickup, 200), dropoff: clean(b.dropoff, 200),
+      kind: KINDS.includes(b.kind) ? b.kind : 'pickup',
+      hotel: clean(b.hotel, 160), pickup: '', dropoff: '',
       pickup_at: clean(b.pickup_at, 25), pax: Math.min(16, Math.max(1, parseInt(b.pax) || 1)),
       source: SOURCES.includes(b.source) ? b.source : 'WALKIN',
       note: clean(b.note, 1000), lang: ['ru', 'vi', 'en'].includes(b.lang) ? b.lang : 'ru',
     };
+    // Điểm đi/đến: đón = khách sạn → phòng khám; đưa về = phòng khám → khách sạn.
+    const place = [row.hotel, clean(b.address, 200)].filter(Boolean).join(', ');
+    if (row.kind === 'pickup') { row.pickup = place; row.dropoff = CLINIC_QUERY(); }
+    else { row.pickup = CLINIC_QUERY(); row.dropoff = place; }
     const when = new Date(row.pickup_at);
-    if (!row.name || row.phone.replace(/\D/g, '').length < 7 || !row.pickup || isNaN(when))
-      return res.status(400).json({ error: 'invalid' });
+    if (!place || isNaN(when)) return res.status(400).json({ error: 'invalid' });
     if (when.getTime() < Date.now() - 3600e3) return res.status(400).json({ error: 'past' });
-    // ID khách: ưu tiên mã người dùng nhập, nếu trống thì tự tạo từ số điện thoại.
-    row.guest_id = clean(b.guest_id, 24).replace(/\s+/g, '').toUpperCase() || guestId(row.phone);
+    // ID khách: ưu tiên mã người dùng nhập, nếu trống thì tự tạo từ số điện thoại (hoặc từ mã đơn).
+    row.guest_id = clean(b.guest_id, 24).replace(/\s+/g, '').toUpperCase() || guestId(row.phone || row.ref);
     const saved = await db.createBooking(row);
     notifyNewBooking(saved).catch((e) => console.error('notify', e.message));
     res.json({ ok: true, ref: saved.ref, guest_id: saved.guest_id });

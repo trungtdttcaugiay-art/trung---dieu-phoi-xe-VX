@@ -2,7 +2,7 @@
 
 Website điều phối xe đưa đón (4 xe 16 chỗ) của Phòng khám nha khoa quốc tế Việt Xô, Nha Trang. Node.js + Express + MySQL. Giao diện RU / VI / EN.
 
-- Trang khách: `/` — giới thiệu, form đặt xe có gợi ý khách sạn (bệnh nhân / ngoài trung tâm / vãng lai)
+- Trang khách: `/` — giới thiệu, form đặt lịch đón khách (khách sạn → phòng khám) hoặc đưa khách về (phòng khám → khách sạn), có gợi ý khách sạn (bệnh nhân / ngoài trung tâm / vãng lai)
 - Trang điều phối: `/admin/` — xem đơn, gán xe (chặn trùng lịch 2 giờ), đổi trạng thái, ghi phụ phí, quản lý xe & tài xế
 - Thông báo đơn mới: Telegram, Zalo OA, Email (kênh nào có biến môi trường thì chạy)
 
@@ -53,6 +53,7 @@ git push -u origin main
 ## Telegram
 
 Tạo bot với @BotFather → lấy token → thêm bot vào nhóm điều phối → lấy `chat_id` (gửi tin vào nhóm rồi mở `https://api.telegram.org/bot<TOKEN>/getUpdates`).
+
 
 
 
