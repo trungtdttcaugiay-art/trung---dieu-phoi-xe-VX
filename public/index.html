@@ -53,7 +53,7 @@
         <a class="btn btn-ghost" href="#how" data-i18n="nav.how"></a>
       </div>
       <div class="stats">
-        <div><b>4</b><span data-i18n="stat.1"></span></div>
+        <div><b>7</b><span data-i18n="stat.1"></span></div>
         <div><b>RU</b><span data-i18n="stat.2"></span></div>
         <div><b>24/7</b><span data-i18n="stat.3"></span></div>
       </div>
@@ -166,7 +166,15 @@
         <div class="field full"><label for="dropoff" data-i18n="f.dropoff"></label><input id="dropoff" name="dropoff"></div>
         <div class="field"><label for="pickup_at" data-i18n="f.when"></label><input id="pickup_at" name="pickup_at" type="datetime-local" required><span class="msg"></span></div>
         <div class="field"><label for="pax" data-i18n="f.pax"></label><input id="pax" name="pax" type="number" min="1" max="16" value="2" inputmode="numeric"></div>
-        <div class="field"><label for="luggage" data-i18n="f.luggage"></label><input id="luggage" name="luggage" type="number" min="0" max="30" value="0" inputmode="numeric"></div>
+        <div class="field"><label for="guest_id" data-i18n="f.gid"></label><input id="guest_id" name="guest_id" maxlength="24" autocomplete="off" data-i18n-ph="f.gid.ph"></div>
+        <div class="field"><label for="source" data-i18n="f.source"></label>
+          <select id="source" name="source" required>
+            <option value="" data-i18n="f.source.ph"></option>
+            <option value="ANEX">ANEX</option>
+            <option value="AB">AB</option>
+            <option value="AMEGA">AMEGA</option>
+            <option value="WALKIN" data-i18n="src.walkin"></option>
+          </select><span class="msg"></span></div>
         <div class="field full"><label for="note" data-i18n="f.note"></label><textarea id="note" name="note" maxlength="1000"></textarea></div>
         <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
       </div>

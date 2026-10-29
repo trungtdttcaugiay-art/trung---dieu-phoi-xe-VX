@@ -30,6 +30,7 @@ app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'], m
 
 const clean = (v, n = 200) => String(v ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n);
 const KINDS = ['clinic', 'outside', 'walkin'];
+const SOURCES = ['ANEX', 'AB', 'AMEGA', 'WALKIN'];
 const STATUSES = ['new', 'confirmed', 'assigned', 'done', 'cancelled'];
 
 const CLINIC_QUERY = () => process.env.CLINIC_MAP_QUERY || 'Phòng khám nha khoa quốc tế Việt Xô Nha Trang';
@@ -60,14 +61,15 @@ app.post('/api/bookings', bookLimit, async (req, res) => {
       kind: KINDS.includes(b.kind) ? b.kind : 'clinic',
       hotel: clean(b.hotel, 160), pickup: clean(b.pickup, 200), dropoff: clean(b.dropoff, 200),
       pickup_at: clean(b.pickup_at, 25), pax: Math.min(16, Math.max(1, parseInt(b.pax) || 1)),
-      luggage: Math.min(30, Math.max(0, parseInt(b.luggage) || 0)),
+      source: SOURCES.includes(b.source) ? b.source : 'WALKIN',
       note: clean(b.note, 1000), lang: ['ru', 'vi', 'en'].includes(b.lang) ? b.lang : 'ru',
     };
     const when = new Date(row.pickup_at);
     if (!row.name || row.phone.replace(/\D/g, '').length < 7 || !row.pickup || isNaN(when))
       return res.status(400).json({ error: 'invalid' });
     if (when.getTime() < Date.now() - 3600e3) return res.status(400).json({ error: 'past' });
-    row.guest_id = guestId(row.phone);
+    // ID khách: ưu tiên mã người dùng nhập, nếu trống thì tự tạo từ số điện thoại.
+    row.guest_id = clean(b.guest_id, 24).replace(/\s+/g, '').toUpperCase() || guestId(row.phone);
     const saved = await db.createBooking(row);
     notifyNewBooking(saved).catch((e) => console.error('notify', e.message));
     res.json({ ok: true, ref: saved.ref, guest_id: saved.guest_id });
@@ -104,9 +106,13 @@ app.patch('/api/admin/bookings/:id', auth.require, async (req, res) => {
   if (p.vehicle_id !== undefined) {
     const vid = p.vehicle_id === null || p.vehicle_id === '' ? null : +p.vehicle_id;
     if (vid !== null) {
+      // Cùng xe: đón ghép được nếu cách nhau dưới 45 phút và tổng khách ≤ 16; từ 45 phút đến 2 giờ là trùng lịch.
       const t = new Date(cur.pickup_at).getTime();
-      const clash = (await db.listBookings()).find((o) => o.id !== id && o.vehicle_id === vid &&
-        !['cancelled', 'done'].includes(o.status) && Math.abs(new Date(o.pickup_at).getTime() - t) < 2 * 3600e3);
+      const clash = (await db.listBookings()).find((o) => {
+        if (o.id === id || o.vehicle_id !== vid || ['cancelled', 'done'].includes(o.status)) return false;
+        const dt = Math.abs(new Date(o.pickup_at).getTime() - t);
+        return dt < 45 * 60e3 ? o.pax + cur.pax > 16 : dt < 2 * 3600e3;
+      });
       if (clash) return res.status(409).json({ error: 'clash', with: clash.ref });
     }
     patch.vehicle_id = vid;
@@ -114,6 +120,35 @@ app.patch('/api/admin/bookings/:id', auth.require, async (req, res) => {
   }
   await db.updateBooking(id, patch);
   res.json({ ok: true });
+});
+
+// Cấu hình cho trang admin: địa chỉ phòng khám + có bật tối ưu lộ trình Google hay không.
+app.get('/api/admin/config', auth.require, (req, res) =>
+  res.json({ clinicQuery: CLINIC_QUERY(), optimize: !!process.env.GOOGLE_MAPS_API_KEY }));
+
+// Sắp xếp thứ tự đón tối ưu: xuất phát từ phòng khám, đi qua các điểm đón, quay về phòng khám.
+app.post('/api/admin/route-order', auth.require, async (req, res) => {
+  const key = process.env.GOOGLE_MAPS_API_KEY;
+  const stops = (Array.isArray(req.body?.stops) ? req.body.stops : []).map((s) => clean(s, 200)).filter(Boolean).slice(0, 15);
+  if (!key) return res.status(501).json({ error: 'no-key' });
+  if (stops.length < 2) return res.json({ order: stops.map((_, i) => i) });
+  try {
+    const clinic = CLINIC_QUERY();
+    const url = 'https://maps.googleapis.com/maps/api/directions/json?' + new URLSearchParams({
+      origin: clinic, destination: clinic, waypoints: 'optimize:true|' + stops.join('|'), mode: 'driving', key,
+    });
+    const j = await (await fetch(url)).json();
+    if (j.status !== 'OK') return res.status(502).json({ error: j.status });
+    const legs = j.routes[0].legs;
+    res.json({
+      order: j.routes[0].waypoint_order,
+      minutes: Math.round(legs.reduce((s, l) => s + l.duration.value, 0) / 60),
+      km: Math.round(legs.reduce((s, l) => s + l.distance.value, 0) / 100) / 10,
+    });
+  } catch (e) {
+    console.error('route-order', e.message);
+    res.status(502).json({ error: 'maps' });
+  }
 });
 
 app.put('/api/admin/vehicles/:id', auth.require, async (req, res) => {

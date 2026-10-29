@@ -24,6 +24,10 @@ Sửa `public/js/hotels.js` (hai nhóm: trung tâm Nha Trang và Cam Ranh). Khá
 
 Trang khách có Google Maps nhúng (không cần API key) cho phòng khám và các khách sạn gợi ý. Đặt địa chỉ phòng khám thật trong biến `CLINIC_MAP_QUERY`. Danh sách xe (biển số, tài xế, SĐT) nhập ở `/admin/` tab Xe & tài xế và hiện công khai trên trang khách; xe nào để trống biển số và tài xế thì không hiện. Trang admin có nút chỉ đường Google Maps cho từng đơn.
 
+## Lịch trình đưa đón
+
+Tab **Lịch trình đưa đón** ở `/admin/`: chọn ngày, hệ thống gom đơn cùng khu vực (trung tâm / Cam Ranh) lệch tối đa 30 phút vào một xe (tối đa 16 khách), xếp 7 xe không trùng giờ, rồi tạo link lộ trình Google Maps (phòng khám → các điểm đón → phòng khám). Đặt `GOOGLE_MAPS_API_KEY` (bật Directions API) để Google tự sắp thứ tự đón ngắn nhất và báo thời gian, quãng đường.
+
 ## Mã ID khách
 
 Mỗi đơn có mã ID khách dạng `KHxxxxxx`, tạo từ số điện thoại nên khách quay lại giữ nguyên ID. Mã hiện ở thông báo, trang admin và màn hình xác nhận.
@@ -49,5 +53,6 @@ git push -u origin main
 ## Telegram
 
 Tạo bot với @BotFather → lấy token → thêm bot vào nhóm điều phối → lấy `chat_id` (gửi tin vào nhóm rồi mở `https://api.telegram.org/bot<TOKEN>/getUpdates`).
+
 
 

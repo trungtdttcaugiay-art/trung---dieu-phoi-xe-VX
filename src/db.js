@@ -6,13 +6,17 @@ const useMysql = !!process.env.DB_HOST;
 const FILE = path.join(__dirname, '..', 'data', 'store.json');
 let pool;
 
-const DEFAULT_VEHICLES = [1, 2, 3, 4].map((n) => ({
+const DEFAULT_VEHICLES = [1, 2, 3, 4, 5, 6, 7].map((n) => ({
   id: n, name: `Xe ${n} · 16 chỗ`, plate: '', driver: '', phone: '', active: 1,
 }));
 
 function readFile() {
-  try { return JSON.parse(fs.readFileSync(FILE, 'utf8')); }
-  catch { return { seq: 0, bookings: [], vehicles: DEFAULT_VEHICLES }; }
+  let d;
+  try { d = JSON.parse(fs.readFileSync(FILE, 'utf8')); }
+  catch { d = { seq: 0, bookings: [], vehicles: [] }; }
+  // Bổ sung các xe còn thiếu (VD thêm xe 5-7 vào dữ liệu cũ)
+  DEFAULT_VEHICLES.forEach((v) => { if (!d.vehicles.some((x) => x.id === v.id)) d.vehicles.push({ ...v }); });
+  return d;
 }
 function writeFile(d) {
   fs.mkdirSync(path.dirname(FILE), { recursive: true });
@@ -41,11 +45,13 @@ async function init() {
     INDEX (pickup_at), INDEX (status)
   ) CHARACTER SET utf8mb4`);
   // Thêm cột guest_id cho bảng cũ (bỏ qua nếu đã có)
-  await pool.query("ALTER TABLE bookings ADD COLUMN guest_id VARCHAR(12) DEFAULT '', ADD INDEX (guest_id)")
+  await pool.query("ALTER TABLE bookings ADD COLUMN guest_id VARCHAR(24) DEFAULT '', ADD INDEX (guest_id)")
     .catch((e) => { if (e.code !== 'ER_DUP_FIELDNAME') throw e; });
-  const [[{ c }]] = await pool.query('SELECT COUNT(*) c FROM vehicles');
-  if (!c) for (const v of DEFAULT_VEHICLES)
-    await pool.query('INSERT INTO vehicles (id,name) VALUES (?,?)', [v.id, v.name]);
+  await pool.query('ALTER TABLE bookings MODIFY guest_id VARCHAR(24)');
+  await pool.query("ALTER TABLE bookings ADD COLUMN source VARCHAR(12) DEFAULT ''")
+    .catch((e) => { if (e.code !== 'ER_DUP_FIELDNAME') throw e; });
+  for (const v of DEFAULT_VEHICLES)
+    await pool.query('INSERT IGNORE INTO vehicles (id,name) VALUES (?,?)', [v.id, v.name]);
 }
 
 const toDate = (s) => String(s).replace('T', ' ').slice(0, 19);
@@ -53,9 +59,9 @@ const toDate = (s) => String(s).replace('T', ' ').slice(0, 19);
 async function createBooking(b) {
   if (useMysql) {
     const [r] = await pool.query(
-      `INSERT INTO bookings (ref,guest_id,name,phone,messenger,kind,hotel,pickup,dropoff,pickup_at,pax,luggage,note,lang)
+      `INSERT INTO bookings (ref,guest_id,source,name,phone,messenger,kind,hotel,pickup,dropoff,pickup_at,pax,note,lang)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [b.ref, b.guest_id, b.name, b.phone, b.messenger, b.kind, b.hotel, b.pickup, b.dropoff, toDate(b.pickup_at), b.pax, b.luggage, b.note, b.lang]);
+      [b.ref, b.guest_id, b.source, b.name, b.phone, b.messenger, b.kind, b.hotel, b.pickup, b.dropoff, toDate(b.pickup_at), b.pax, b.note, b.lang]);
     return { ...b, id: r.insertId, status: 'new', vehicle_id: null, surcharge: '' };
   }
   const d = readFile();

@@ -9,7 +9,8 @@ function text(b) {
     `Giờ đón: ${String(b.pickup_at).replace('T', ' ')}`,
     `Đón: ${b.pickup}${b.hotel ? ' (' + b.hotel + ')' : ''}`,
     `Đến: ${b.dropoff || 'Phòng khám Việt Xô'}`,
-    `Số khách: ${b.pax} · Hành lý: ${b.luggage}`,
+    `Số khách: ${b.pax} · Nguồn: ${b.source === 'WALKIN' ? 'Vãng lai' : b.source}`,
+    `Giờ đặt: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`,
     b.note ? `Ghi chú: ${b.note}` : '',
   ].filter(Boolean).join('\n');
 }

@@ -126,7 +126,8 @@
     [['name', 'v.required'], ['pickup', 'v.required'], ['pickup_at', 'v.required']].forEach(([n, m]) => {
       const bl = !form[n].value.trim(); setErr(form[n], bl ? t(m) : ''); if (bl && !bad) bad = form[n];
     });
-    const phoneBad = form.phone.value.replace(/\D/g, '').length < 7;
+    const srcBad = !form.source.value; setErr(form.source, srcBad ? t('v.required') : ''); if (srcBad && !bad) bad = form.source;
+    const phoneBad =form.phone.value.replace(/\D/g, '').length < 7;
     setErr(form.phone, phoneBad ? t('v.phone') : ''); if (phoneBad && !bad) bad = form.phone;
     if (bad) bad.focus();
     return !bad;
