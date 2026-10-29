@@ -15,6 +15,7 @@
     $$('.lang button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
     $$('[data-i18n-ph]').forEach((el) => (el.placeholder = t(el.dataset.i18nPh)));
     renderHotels();
+    if (typeof renderChips === 'function') { renderChips(); renderFleet(); }
     updateSurcharge();
     try { localStorage.setItem('vx_lang', lang); } catch {}
   }
@@ -43,6 +44,54 @@
     });
   }
 
+  // Bản đồ Google (nhúng không cần API key)
+  let clinicQuery = 'Phòng khám nha khoa quốc tế Việt Xô Nha Trang';
+  const mapFrame = $('#mapFrame'), mapOpen = $('#mapOpen'), chips = $('#mapChips');
+  const mapSrc = (q) => `https://www.google.com/maps?q=${encodeURIComponent(q)}&output=embed&hl=${lang}`;
+  const mapLink = (q) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+  function showMap(q, btn) {
+    mapFrame.src = mapSrc(q);
+    mapOpen.href = mapLink(q);
+    $$('.chip', chips).forEach((c) => c.setAttribute('aria-pressed', String(c === btn)));
+  }
+  function renderChips() {
+    chips.replaceChildren();
+    const add = (label, q, first) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.textContent = label;
+      b.setAttribute('aria-pressed', 'false');
+      b.addEventListener('click', () => showMap(q, b));
+      chips.append(b);
+      if (first) showMap(q, b);
+    };
+    add(t('map.clinic'), clinicQuery, true);
+    (HOTELS.center || []).forEach((n) => add(n, n + ', Nha Trang'));
+    (HOTELS.camranh || []).forEach((n) => add(n, n + ', Cam Ranh'));
+  }
+  fetch('/api/config').then((r) => r.json()).then((c) => { if (c.clinicQuery) { clinicQuery = c.clinicQuery; renderChips(); } }).catch(() => {});
+  renderChips();
+
+  // Danh sách xe: chỉ hiện xe đã có biển số hoặc tài xế
+  let fleet = [];
+  function renderFleet() {
+    const box = $('#fleetList');
+    box.replaceChildren();
+    fleet.forEach((v) => {
+      const c = document.createElement('div'); c.className = 'fcard';
+      const h = document.createElement('b'); h.textContent = v.name; c.append(h);
+      const row = (label, val) => { const p = document.createElement('span'); p.textContent = `${label}: ${val}`; c.append(p); };
+      if (v.plate) row(t('fleet.plate'), v.plate);
+      if (v.driver) row(t('fleet.driver'), v.driver);
+      if (v.phone) {
+        const a = document.createElement('a');
+        a.href = 'tel:' + v.phone.replace(/[^\d+]/g, ''); a.textContent = v.phone;
+        c.append(a);
+      }
+      box.append(c);
+    });
+  }
+  fetch('/api/fleet').then((r) => r.json()).then((f) => { fleet = f; renderFleet(); }).catch(() => {});
+
   // Form
   const form = $('#bookForm'), result = $('#result'), sur = $('#surcharge'), btn = $('#submitBtn');
   function updateSurcharge() {
@@ -51,6 +100,13 @@
     sur.textContent = k === 'clinic' ? '' : t('sur.' + k);
   }
   $$('input[name=kind]').forEach((r) => r.addEventListener('change', updateSurcharge));
+
+  const hotelMap = $('#hotelMap');
+  form.hotel.addEventListener('input', () => {
+    const v = form.hotel.value.trim();
+    hotelMap.hidden = !v;
+    if (v) hotelMap.href = mapLink(v + ', Nha Trang');
+  });
 
   const pad = (n) => String(n).padStart(2, '0');
   const now = new Date();

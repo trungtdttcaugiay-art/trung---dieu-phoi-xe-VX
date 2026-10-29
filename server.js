@@ -19,6 +19,7 @@ app.use(helmet({
       imgSrc: ["'self'", 'data:'],
       scriptSrc: ["'self'"],
       connectSrc: ["'self'"],
+      frameSrc: ['https://www.google.com'],
       formAction: ["'self'"],
       upgradeInsecureRequests: null,
     },
@@ -30,6 +31,16 @@ app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'], m
 const clean = (v, n = 200) => String(v ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n);
 const KINDS = ['clinic', 'outside', 'walkin'];
 const STATUSES = ['new', 'confirmed', 'assigned', 'done', 'cancelled'];
+
+const CLINIC_QUERY = () => process.env.CLINIC_MAP_QUERY || 'Phòng khám nha khoa quốc tế Việt Xô Nha Trang';
+app.get('/api/config', (req, res) => res.json({ clinicQuery: CLINIC_QUERY() }));
+
+// Danh sách xe hiển thị công khai: chỉ xe đã điền biển số hoặc tên tài xế.
+app.get('/api/fleet', async (req, res) => {
+  const vs = await db.listVehicles();
+  res.json(vs.filter((v) => v.active && (v.plate || v.driver))
+    .map((v) => ({ name: v.name, plate: v.plate, driver: v.driver, phone: v.phone })));
+});
 
 // Mã ID khách: cùng số điện thoại luôn ra cùng một mã, khách quay lại giữ nguyên ID.
 const guestId = (phone) => {

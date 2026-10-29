@@ -24,6 +24,7 @@
     <nav class="main" id="nav" aria-label="Main">
       <a href="#how" data-i18n="nav.how"></a>
       <a href="#fleet" data-i18n="nav.fleet"></a>
+      <a href="#map" data-i18n="nav.map"></a>
       <a href="#book" data-i18n="nav.book"></a>
     </nav>
     <div class="lang" role="group" aria-label="Language">
@@ -117,6 +118,24 @@
         <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="fleet.3"></span></li>
         <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="fleet.4"></span></li>
       </ul>
+      <div class="fleet-list" id="fleetList" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<section id="map">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="kicker" data-i18n="map.k"></p>
+      <h2 data-i18n="map.h"></h2>
+      <p data-i18n="map.p"></p>
+    </div>
+    <div class="map-box rv">
+      <div class="map-chips" id="mapChips" role="group" aria-label="Pickup points"></div>
+      <div class="map-frame">
+        <iframe id="mapFrame" title="Google Maps" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+      </div>
+      <a class="btn btn-ghost" id="mapOpen" target="_blank" rel="noopener" data-i18n="map.open"></a>
     </div>
   </div>
 </section>
@@ -142,7 +161,7 @@
         <div class="field"><label for="name" data-i18n="f.name"></label><input id="name" name="name" autocomplete="name" required><span class="msg"></span></div>
         <div class="field"><label for="phone" data-i18n="f.phone"></label><input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required><span class="msg"></span></div>
         <div class="field"><label for="messenger" data-i18n="f.messenger"></label><input id="messenger" name="messenger"></div>
-        <div class="field"><label for="hotel" data-i18n="f.hotel"></label><input id="hotel" name="hotel" list="hotelList" autocomplete="off" data-i18n-ph="f.hotel.ph"><datalist id="hotelList"></datalist></div>
+        <div class="field"><label for="hotel" data-i18n="f.hotel"></label><input id="hotel" name="hotel" list="hotelList" autocomplete="off" data-i18n-ph="f.hotel.ph"><datalist id="hotelList"></datalist><a class="maplink" id="hotelMap" target="_blank" rel="noopener" hidden data-i18n="map.view"></a></div>
         <div class="field full"><label for="pickup" data-i18n="f.pickup"></label><input id="pickup" name="pickup" autocomplete="street-address" required><span class="msg"></span></div>
         <div class="field full"><label for="dropoff" data-i18n="f.dropoff"></label><input id="dropoff" name="dropoff"></div>
         <div class="field"><label for="pickup_at" data-i18n="f.when"></label><input id="pickup_at" name="pickup_at" type="datetime-local" required><span class="msg"></span></div>

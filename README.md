@@ -20,6 +20,10 @@ Nếu `DB_HOST` để trống, dữ liệu lưu tạm trong `data/store.json` (c
 
 Sửa `public/js/hotels.js` (hai nhóm: trung tâm Nha Trang và Cam Ranh). Khách vẫn gõ tự do nếu khách sạn không có trong danh sách.
 
+## Bản đồ và danh sách xe
+
+Trang khách có Google Maps nhúng (không cần API key) cho phòng khám và các khách sạn gợi ý. Đặt địa chỉ phòng khám thật trong biến `CLINIC_MAP_QUERY`. Danh sách xe (biển số, tài xế, SĐT) nhập ở `/admin/` tab Xe & tài xế và hiện công khai trên trang khách; xe nào để trống biển số và tài xế thì không hiện. Trang admin có nút chỉ đường Google Maps cho từng đơn.
+
 ## Mã ID khách
 
 Mỗi đơn có mã ID khách dạng `KHxxxxxx`, tạo từ số điện thoại nên khách quay lại giữ nguyên ID. Mã hiện ở thông báo, trang admin và màn hình xác nhận.
@@ -45,4 +49,5 @@ git push -u origin main
 ## Telegram
 
 Tạo bot với @BotFather → lấy token → thêm bot vào nhóm điều phối → lấy `chat_id` (gửi tin vào nhóm rồi mở `https://api.telegram.org/bot<TOKEN>/getUpdates`).
+
 

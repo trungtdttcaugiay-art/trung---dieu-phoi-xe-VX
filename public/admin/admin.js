@@ -28,7 +28,9 @@
     if (r.ok) { state = r.data; render(); }
   }
 
-  const fmtTime = (s) => String(s).replace('T', ' ').slice(0, 16);
+  const gmaps = (from, to) => 'https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(from) + '&destination=' + encodeURIComponent(to);
+  const CLINIC = 'Phòng khám nha khoa quốc tế Việt Xô Nha Trang';
+  const fmtTime =(s) => String(s).replace('T', ' ').slice(0, 16);
 
   function render() {
     const vv = $('#vehiclesView'), bv = $('#bookingsView');
@@ -48,18 +50,22 @@
   function row(b) {
     const vsel = el('select', { 'aria-label': 'Gán xe', onchange: (e) => patch(b.id, { vehicle_id: e.target.value || null }) },
       el('option', { value: '' }, '— chưa gán —'),
-      state.vehicles.map((v) => { const o = el('option', { value: v.id }, v.name + (v.driver ? ' · ' + v.driver : '')); if (v.id === b.vehicle_id) o.selected = true; return o; }));
+      state.vehicles.map((v) => { const o = el('option', { value: v.id }, [v.name, v.plate, v.driver].filter(Boolean).join(' · ')); if (v.id === b.vehicle_id) o.selected = true; return o; }));
     const ssel = el('select', { 'aria-label': 'Trạng thái', onchange: (e) => patch(b.id, { status: e.target.value }) },
       Object.entries(STATUS).map(([k, v]) => { const o = el('option', { value: k }, v); if (k === b.status) o.selected = true; return o; }));
     const sur = el('input', { value: b.surcharge || '', placeholder: 'VD: 300.000đ', 'aria-label': 'Phụ phí', onchange: (e) => patch(b.id, { surcharge: e.target.value }) });
-    const contact = [b.phone, b.messenger].filter(Boolean).join(' · ');
+    const veh = state.vehicles.find((v) => v.id === b.vehicle_id);
+    const vinfo = veh ? el('div', { style: 'margin-top:6px;font-size:.85rem;color:var(--muted-fg)' }, [veh.plate, veh.driver].filter(Boolean).join(' · '), veh.phone ? el('br') : '', veh.phone ? el('a', { href: 'tel:' + veh.phone.replace(/[^\d+]/g, '') }, veh.phone) : '') : '';
+    const from = [b.pickup, b.hotel].filter(Boolean).join(', ');
+    const contact =[b.phone, b.messenger].filter(Boolean).join(' · ');
     return el('tr', {},
       el('td', {}, el('b', {}, b.ref), el('br'), el('span', { class: 'badge s-' + b.status }, STATUS[b.status] || b.status)),
       el('td', {}, fmtTime(b.pickup_at)),
       el('td', {}, el('b', {}, b.name), el('br'), el('span', { class: 'badge s-confirmed' }, 'ID ' + (b.guest_id || '—')), el('br'), el('a', { href: 'tel:' + b.phone.replace(/[^\d+]/g, '') }, contact)),
-      el('td', {}, b.pickup + (b.hotel ? ` (${b.hotel})` : ''), el('br'), '→ ' + (b.dropoff || 'Phòng khám Việt Xô'), b.note ? el('div', { style: 'color:var(--muted-fg)' }, 'Ghi chú: ' + b.note) : ''),
+      el('td', {}, b.pickup + (b.hotel ? ` (${b.hotel})` : ''), el('br'), '→ ' + (b.dropoff || 'Phòng khám Việt Xô'), el('br'),
+        el('a', { href: gmaps(from, b.dropoff || CLINIC), target: '_blank', rel: 'noopener' }, 'Chỉ đường Google Maps'), b.note ? el('div', { style: 'color:var(--muted-fg)' }, 'Ghi chú: ' + b.note) : ''),
       el('td', {}, el('span', { class: 'k-' + b.kind }, KIND[b.kind] || b.kind), el('br'), `${b.pax} khách · ${b.luggage} kiện`),
-      el('td', {}, vsel), el('td', {}, ssel), el('td', {}, sur));
+      el('td', {}, vsel, vinfo), el('td', {}, ssel), el('td', {}, sur));
   }
 
   async function patch(id, body) {
